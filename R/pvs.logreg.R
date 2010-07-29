@@ -1,0 +1,53 @@
+pvs.logreg <- function(NewX, X, Y, tau.o=1,
+	a0=NULL, b0=NULL,
+	pen.method=c("vectors","simple","none"),
+	progress=FALSE)
+{
+	pen.method <- match.arg(pen.method)
+	n <- dim(X)[1]
+	d <- dim(X)[2]
+	Y <- factor(Y)
+	Y <- unclass(Y)
+	L <- max(Y)
+	X <- as.matrix(X)
+	
+	if (is.null(a0) || is.null(b0))
+	{
+		if (progress)
+		{
+			print('Preliminary log. regression:',quote=FALSE)
+		}
+		tmp <- pvclass:::penlogreg(X,Y,tau.o,
+			pen.method=pen.method,progress=progress)
+		a0 <- tmp$a
+		b0 <- tmp$b
+	}
+
+	NewX <- as.matrix(NewX)
+	if (dim(NewX)[2] == 1)
+	{
+		NewX <- t(NewX)
+	}
+	PV <- matrix(1,nrow=dim(NewX)[1],ncol=L)
+	Xa <- rbind(rep(0,d),X)
+	Ya <- c(0,Y)
+
+	for (i in 1:dim(NewX)[1])
+	{
+		Xa[1,] <- NewX[i,]
+		for (theta in 1:L)
+		{
+			if (progress)
+			{
+				txt <- paste('Observation no. ',as.character(i),
+					', class ',as.character(theta),' ...')
+				print(txt,quote=FALSE)
+			}
+			Ya[1] <- theta
+			tmp <- pvclass:::penlogreg(Xa,Ya,tau.o,
+				a0=a0,b0=b0)$PM[Ya==theta,theta]
+			PV[i,theta] <- mean(tmp <= tmp[1])
+		}
+	}
+	return(PV)
+}

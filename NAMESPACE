@@ -1,0 +1,14 @@
+export(
+       cvpvs,
+       pvs,
+       cvpvs.gaussian,
+       pvs.gaussian,
+       cvpvs.knn,
+       pvs.knn,
+       cvpvs.wnn,
+       pvs.wnn,
+       pvs.logreg,
+       cvpvs.logreg,
+       analyze.pvs
+)
+import(Matrix)
