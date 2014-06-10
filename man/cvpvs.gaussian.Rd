@@ -44,6 +44,6 @@ Lutz Dümbgen \email{lutz.duembgen@stat.unibe.ch} \cr
 X <- iris[, 1:4]
 Y <- iris[, 5]
 
-cvpvs.gaussian(X, Y, cova = 'M')
+cvpvs.gaussian(X, Y, cova = 'standard')
 }
 \keyword{ classif }

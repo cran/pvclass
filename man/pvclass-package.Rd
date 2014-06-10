@@ -5,18 +5,10 @@
 \docType{package}
 \title{ P-Values for Classification }
 \description{
-Computes nonparametric p-values for the potential class memberships of new observations as well as cross-validated p-values for the training data. The p-values are based on permutation tests applied to an estimated Bayesian likelihood ratio, using a plug-in statistic for the Gaussian model, 'k nearest neighbors' or 'weighted nearest neighbors'. \cr
+Computes nonparametric p-values for the potential class memberships of new observations as well as cross-validated p-values for the training data. The p-values are based on permutation tests applied to an estimated Bayesian likelihood ratio, using a plug-in statistic for the Gaussian model, 'k nearest neighbors', 'weighted nearest neighbors' or 'penalized logistic regression'. \cr
 Additionally, it provides graphical displays and quantitative analyses of the p-values.
 }
 \details{
-\tabular{ll}{
-Package: \tab pvclass\cr
-Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2010-07-29\cr
-License: \tab GPL-2 \cr
-LazyLoad: \tab yes\cr
-}
 Use \code{\link{cvpvs}} to compute cross-validated p-values, \code{\link{pvs}} to classify new observations and \code{\link{analyze.pvs}} to analyze the p-values.
 }
 \references{

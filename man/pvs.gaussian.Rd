@@ -15,9 +15,9 @@ pvs.gaussian(NewX, X, Y, cova = c('standard', 'M', 'sym'))
   \item{NewX}{ data matrix consisting of one or several new observations (row vectors) to be classified. }
   \item{X}{ matrix containing training observations, where each observation is a row vector. }
   \item{Y}{ vector indicating the classes which the training observations belong to. }
-  \item{cova}{ estimator for the covariance matrix:
-               'standard': standard estimator,
-               'M': M-estimator,
+  \item{cova}{ estimator for the covariance matrix: \cr
+               'standard': standard estimator, \cr
+               'M': M-estimator, \cr
                'sym': symmetrized M-estimator. }
 }
 \details{
@@ -49,6 +49,6 @@ X <- iris[c(1:49, 51:99, 101:149), 1:4]
 Y <- iris[c(1:49, 51:99, 101:149), 5]
 NewX <- iris[c(50, 100, 150), 1:4]
 
-pvs.gaussian(NewX, X, Y, cova = 'M')
+pvs.gaussian(NewX, X, Y, cova = 'standard')
 }
 \keyword{ classif }

@@ -1,34 +1,39 @@
 sigmaM <-
-function(X,Y,L,dimension,n,nvec,mu=NA,sigma=NA){
-  if(any(is.na(mu))){
+function(X, Y, L, dimension, n, nvec, mu = NULL, sigma = NULL){
+  if(is.null(mu)) {
     # Compute mu
-    mu <- matrix(0,L,dimension)
-    for(m in 1:L) {
-      mu[m,] = apply(X[Y==m,],2,mean)
+    mu <- matrix(0, L, dimension)
+    for(b in seq_len(L)) {
+      mu[b, ] = colMeans(X[Y == b, ])
     }
   }
-
-  M <- array(0,c(dimension,dimension,L))
-	Xc <- X - mu[Y,]
-	for (b in 1:L){
-		M[,,b] <- t(Xc[Y==b,]) %*% Xc[Y==b,]
-		}
-
-  if(any(is.na(sigma))){
-    # Compute sigma
-    sigma <- apply(M,c(1,2),sum)/(n-L)
+  
+  M <- array(0, c(L, dimension, dimension))
+  Xc <- X - mu[Y, ]
+  for(b in seq_len(L)){
+    M[b, , ] <- crossprod(Xc[Y == b, ])
   }
+
+  if(is.null(sigma)) {
+    # Compute sigma
+    sigma <- colSums(M, dims = 1) / (n - L)
+  }
+
+  Mnvec <- nvec * M
+  dimn <- dimension / n
+  Id <- diag(1, dimension)
+  
   # Fixed point iteration
   repeat{
     sigma.old <- sigma
-    sigma <- matrix(0,dimension,dimension)
-    for(b in 1:L){
-      sigma <- sigma + nvec[b] * M[,,b] /
-        sum(diag( solve(sigma.old) %*% M[,,b] ))
+    sigma.inv <- solve(sigma)
+    sigma <- matrix(0, dimension, dimension)
+    for(b in seq_len(L)){
+      sigma <- sigma + Mnvec[b, , ] / sum(diag( sigma.inv %*% M[b, , ] ))
     }
-    sigma <- dimension / n * sigma
-    if(Matrix::norm(solve(sigma.old)%*%sigma - diag(1,dimension),type="F")    
-        < 10^-5) break
+    sigma <- dimn * sigma
+    
+    if(Matrix::norm(sigma.inv %*% sigma - Id, type = "F") < 10^-5) break
   }
   return(sigma)
 }

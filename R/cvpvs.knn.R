@@ -1,196 +1,396 @@
 cvpvs.knn <-
-function(X,Y,k=NA,distance=c('euclidean','ddeuclidean','mahalanobis'),cova=c('standard','M','sym')) {
+function(X, Y, k = NULL,
+         distance = c('euclidean', 'ddeuclidean', 'mahalanobis'),
+         cova = c('standard', 'M', 'sym')) {
+  
   cova <- match.arg(cova)
   distance <- match.arg(distance)
   
   # Adjust input
   X <- as.matrix(X)
-  n<-dim(X)[1]
-  dimension<-dim(X)[2]
+  n <- NROW(X)
+  dimension <- NCOL(X)
 
-  Y <- factor(Y)
-  Y <- unclass(Y)
-  L=max(Y)
+  Ylevels <- levels(factor(Y))
+  Y <- as.integer(factor(Y))
+  L <- max(Y)
 
+  if(any(k >= n)) stop('k >= sample size!')
+  
   # Computation of nvec: an L-dimensional column vector, where nvec[b]
   # is the number of training observations belonging to class b.
-  nvec <- rep(0,L)
-  for(b in 1:L) {
-    nvec[b] <- sum(Y==b)
+  nvec <- rep(0, L)
+  for(b in seq_len(L)) {
+    nvec[b] <- sum(Y == b)
     
     # Stop if there are less than two observations from class b
-    if(nvec[b]==0) {
+    if(nvec[b] == 0) {
       stop(paste('no observations from class',
                  as.character(b),'!'))
     }
-    if(nvec[b]==1) {
+    if(nvec[b] == 1) {
       stop(paste('only one observation from class',
                  as.character(b),'!'))
     }
   }
   
   # If k is not a single integer, search for the optimal k.
-  if(length(k)>1 | is.na(k)[1]) {
-    if(is.na(k[1])) {
-      k <- 1:ceiling(length(Y)/2)
+  if(length(k) > 1 | is.null(k)) {
+    if(is.null(k)) {
+      k <- 2:ceiling(length(Y) / 2)
     }
-    opt.k <- matrix(0,n,L)
-    PV <- matrix(0,n,L)
+    opt.k <- matrix(0, n, L)
     
     # optimal k for correct classes
-    for(th in 1:L){
-      tmp <- pvclass:::cvoptk(X=X,Y=Y,th=th,K=k,distance=distance,cova=cova,nvec=nvec,n=n,L=L,dimension=dimension)
-      opt.k[Y==th,th] <- tmp
-      PV[Y==th,th] <- cvpvs.knn(X=X,Y=Y,k=tmp,distance=distance,cova=cova)[Y==th,th]
-    }
+    switch(distance,
+           'euclidean' = {
+             # Use Euclidean distance
+             di.tmp <- as.matrix(dist(X))
+             
+             for(th in seq_len(L)) {
+               T <- matrix(0, n, length(k))
+               thIndex <- Y == th
+               for(j in which(Y != th)) {
+                 sdi <- sort(di.tmp[j, ])
+                 thIndex[j] <- TRUE
+                 for(l in seq_along(k)) {
+                   Rl <- sdi[k[l]]
+                   T[j, l] <- sum(di.tmp[j, thIndex] <= Rl) / k[l]
+                 }
+               }
+               thIndex[j] <- FALSE
 
+               T <- colSums(T)
+               opt.k[thIndex, th] <- k[which.min(T)]
+             }
+           },
+           'ddeuclidean' = {
+             # Use data driven Euclidean distance
+             for(m in seq_len(dimension)) {
+               X[ , m] <- X[ , m] / sd(X[ , m])
+             }
+             di.tmp <- as.matrix(dist(X))
+             
+             for(th in seq_len(L)) {
+               T <- matrix(0, n, length(k))
+               thIndex <- Y == th
+               for(j in which(Y != th)) {
+                 sdi <- sort(di.tmp[j, ])
+                 thIndex[j] <- TRUE
+                 for(l in seq_along(k)) {
+                   Rl <- sdi[k[l]]
+                   T[j, l] <- sum(di.tmp[j, thIndex] <= Rl) / k[l]
+                 }
+               }
+               thIndex[j] <- FALSE
+               
+               T <- colSums(T)
+               opt.k[thIndex, th] <- k[which.min(T)]          
+             }
+           },
+           'mahalanobis' = {
+             # Use Mahalanobis distance
+             di.tmp <- matrix(0, n, n)
+    
+
+             
+             # Compute sigma      
+             switch(cova,
+                    'standard' = {
+                      # Compute mu
+                      mu <- matrix(0, L, dimension)
+                      for(m in seq_len(L)) {
+                        mu[m, ] = colMeans(X[Y == m, ])
+                      }
+                      sigma <- sigmaSt(X = X, Y = Y, L = L,
+                                                 dimension = dimension,
+                                                 n = n, mu = mu)
+                    },
+                    'M' = {
+                      tmp <- MVTMLE.LDA(X = X, Y = Y, L = L, n = n, nu = 1,
+                                                  M0=NULL,B0=NULL,
+                                                  delta=10^(-7),steps=FALSE)
+                      mu <- tmp$M
+                      sigma <- tmp$S
+                      B <- tmp$B
+                    },
+                    'sym' = {
+                      tmp <- sigmaSym(X = X, Y = Y, L = L,
+                                                dimension = dimension, n = n,
+                                                nvec = nvec,
+                                                B = NULL,
+                                                nu=0,
+                                                delta=10^(-7), prewhitened=TRUE,
+                                                steps=FALSE, nmax=500
+                                                )
+                      sigma <- tmp$S
+                      B <- tmp$B
+                    } )
+             
+             # Compute Mahalanobis distances
+             sigma.inv <- solve(sigma)
+             for(m in seq_len(n)) {
+               di.tmp[m, ] <- mahalanobis(X, X[m, ], sigma.inv, inverted = TRUE)
+             }  
+             
+             for(th in seq_len(L)) {
+               T <- matrix(0, n, length(k))
+               thIndex <- Y == th
+               for(j in which(Y != th)) {
+                 sdi <- sort(di.tmp[j, ])
+                 thIndex[j] <- TRUE
+                 for(l in seq_along(k)) {
+                   Rl <- sdi[k[l]]
+                   T[j, l] <- sum(di.tmp[j, thIndex] <= Rl) / k[l]
+                 }
+               }
+               thIndex[j] <- FALSE
+
+               T <- colSums(T)
+               opt.k[thIndex, th] <- k[which.min(T)]                            
+             }
+
+           } )
+         
+
+    
+    
     # optimal k other classes
-    for(i in 1:n){
-      for(th in 1:L){
-        if(Y[i]!=th){
+    if(distance == "euclidean" | distance == 'ddeuclidean') {
+      # Use Euclidean distance or data driven Euclidean distance
+      for(th in seq_len(L)) {
+        thIndex <- Y == th
+        for(i in which(Y != th)) {
+          T <- matrix(0, n, length(k))
+          thIndex[i] <- TRUE
+          for(j in which(!thIndex)) {
+            sdi <- sort(di.tmp[j, ])
+            thIndex[j] <- TRUE
+            for(l in seq_along(k)) {
+              Rl <- sdi[k[l]]
+              T[j, l] <- sum(di.tmp[j, thIndex] <= Rl) / k[l]
+            }
+            thIndex[j] <- FALSE
+          }
+          thIndex[i] <- FALSE
+          
+          T <- colSums(T)
+          opt.k[i, th] <- k[which.min(T)]
+        }
+      }
+    } else {
+      # Use Mahalanobis distance
+      for(th in seq_len(L)) {
+        for(i in which(Y != th)) {
+          # Add NewX[i] temporarily to group th:
           Y.tmp <- Y
           Y.tmp[i] <- th
+          thIndex <- Y.tmp == th
           nvec.tmp <- nvec
-          nvec.tmp[th] <- nvec[th]+1
-          nvec.tmp[Y[i]] <- nvec[Y[i]]-1
-          opt.k[i,th] <- pvclass:::cvoptk(X=X,Y=Y.tmp,th=th,K=k,distance=distance,cova=cova,nvec=nvec.tmp,n=n,L=L,dimension=dimension)
-          PV[i,th] <- cvpvs.knn(X=X,Y=Y,k=opt.k[i,th],distance=distance,cova=cova)[i,th]
+          nvec.tmp[c(Y[i], th)] <- c(nvec[Y[i]] - 1, nvec[th] + 1)
+         
+          # Adjust sigma
+          switch(cova,
+                 'standard' = {
+                   sigma.tmp <- sigma - (tcrossprod(X[i,]-mu[Y[i],]) /
+                                         (1 - 1 / nvec[Y[i]]) -
+                                         tcrossprod(X[i,]-mu[th,]) /
+                                         (1 - 1 / nvec[th]) ) / (n-L)
+                 },
+                 'M' = {
+                   sigma.tmp <- MVTMLE.LDA(X = X, Y = Y, L = L, n = n, nu = 1,
+                                                     M0=mu,B0=B,
+                                                     delta=10^(-7),steps=FALSE)$S
+                 },
+                 'sym' = {
+                   sigma.tmp <- sigmaSym(X = X, Y = Y.tmp, L = L,
+                                                   dimension = dimension, n = n,
+                                                   nvec = nvec.tmp, B = B, nu=0,
+                                                   delta=10^(-7), prewhitened=TRUE,
+                                                   steps=FALSE, nmax=500)$S
+                 } )
+          
+          # Compute Mahalanobis distances
+          sigmatmp.inv <- solve(sigma.tmp)
+          for(m in seq_len(n)) {
+            di.tmp[m, ] <- mahalanobis(X, X[m, ], sigmatmp.inv,
+                                       inverted = TRUE)
+          }
+
+          T <- matrix(0, n, length(k))
+          thIndex.tmp <- thIndex
+          for(j in which(!thIndex)) {
+            sdi <- sort(di.tmp[j, ])
+            thIndex.tmp[j] <- TRUE
+            for(l in seq_along(k)) {
+              Rl <- sdi[k[l]]
+              T[j, l] <- sum(di.tmp[j, thIndex.tmp] <= Rl) / k[l]
+            }
+          }
+          thIndex.tmp[j] <- FALSE
+          
+          T <- colSums(T)
+          opt.k[i, th] <- k[which.min(T)]
         }
       }
     }
-    attributes(PV)$opt.k<-opt.k
-    dimnames(PV)[[2]] <- attr(Y,'levels')
+    PV <- matrix(0, n, L)
+
+    for(j in unique(c(opt.k))) {
+      PV[opt.k == j] <- cvpvs.knn(X = X, Y = Y, k = j, distance = distance,
+                                  cova = cova)[opt.k == j]
+    }
+        
+    attributes(PV)$opt.k <- opt.k
+    dimnames(PV)[[2]] <- Ylevels
     return(PV)
   }
   
    
   
-  if(k>=n) stop('k >= sample size!')
+
   
   # Compute distances
-  if(distance=="mahalanobis") {
+  if(distance == "mahalanobis") {
     # Use Mahalanobis distance
-    
-    # Compute mu
-    mu <- matrix(0,L,dimension)
-    for(m in 1:L) {
-      mu[m,] = apply(X[Y==m,],2,mean)
-    }
-    
+   
     # Compute sigma      
-    if(cova=='standard'){
-      sigma <- pvclass:::sigmaSt(X=X,Y=Y,L=L,dimension=dimension,n=n,mu=mu)
-    } else {
-      if(cova=='M'){
-        sigma <- pvclass:::sigmaM(X=X,Y=Y,L=L,dimension=dimension,n=n,nvec=nvec,mu=mu)
-      } else {
-        if(cova=='sym'){
-          sigma <- pvclass:::sigmaSt(X=X,Y=Y,L=L,dimension=dimension,n=n,mu=mu)
-          sigma <- pvclass:::sigmaSym(X=X,Y=Y,L=L,dimension=dimension,n=n,nvec=nvec,sigma=sigma)
-        } else {
-          stop("type of covariance estimator not valid!")
-        }
-      }
+    switch(cova,
+           'standard' = {
+             # Compute mu
+             mu <- matrix(0, L, dimension)
+             for(m in seq_len(L)) {
+               mu[m, ] = colMeans(X[Y == m, ])
+             }
+             sigma <- sigmaSt(X = X, Y = Y, L = L,
+                                        dimension = dimension, n = n, mu = mu)
+           },
+           'M' = {
+             tmp <- MVTMLE.LDA(X = X, Y = Y, L = L, n = n, nu = 1,
+                                         M0=NULL,B0=NULL,
+                                         delta=10^(-7),steps=FALSE)
+             mu <- tmp$M
+             sigma <- tmp$S
+             B <- tmp$B
+           },
+           'sym' = {
+             tmp <- sigmaSym(X = X, Y = Y, L = L,
+                                       dimension = dimension, n = n,
+                                       nvec = nvec,
+                                       B = NULL,
+                                       nu=0,
+                                       delta=10^(-7), prewhitened=TRUE,
+                                       steps=FALSE, nmax=500
+                                       )
+             sigma <- tmp$S
+             B <- tmp$B
+           } )
+
+
+    # Compute Mahalanobis distances
+    sigma.inv <- solve(sigma)
+    di <- matrix(0, n, n)
+    for(m in seq_len(n)) {
+      di[m, ] <- mahalanobis(X, X[m, ], sigma.inv, inverted = TRUE)
     }
     
-    di <- matrix(0,n,n)
-    for(i in 1:n) {
-      di[i,] <- mahalanobis(X,X[i,],sigma)
-    }
     # Computation of Rk :  a column vector, where Rk[i] is the
     #                      distance between X[i,] and its k-th nearest
     #                      neighbor.
     #                Nk :  Nk[i,b] is the number of training
     #                      observations from class b among the k
     #                      nearest neighbors of X[i,]
-    Rk <- rep(0,n)
-    Nk <- matrix(0,n,L)
     
-    sdi <- t(apply(di,1,sort))
-    Rk <- sdi[,k]
-    for(i in 1:n) {
-      for(b in 1:L) {
-        bIndex <- which(Y==b)
-        # get number of observations for each class among k
-        # neighbours:
-        Nk[i,b] <- sum(di[i,bIndex] <= Rk[i])
-      }
+    Rk <- rep(0, n)
+    Nk <- matrix(0, n, L)
+    
+    sdi <- apply(di, 1, sort)
+    Rk <- sdi[k, ]
+   
+    for(b in seq_len(L)) {
+      bIndex <- Y == b
+      # get number of observations for each class among k
+      # neighbours:
+      Nk[ , b] <- rowSums(di[ , bIndex] <= Rk)
     }
+
     
     # Computation of the cross-validated P-values:
-    PV <- matrix(0,n,L)
+    PV <- matrix(0, n, L)
     
-    # P-values for the correct classes, i.e. PV[i,Y[i]]:
-    for(th in 1:L) {
-      JJ <- which(Y==th)
-      Tv <- Nk[JJ,th]
-      PV[JJ,th] <- pvclass:::CompPVs(Tv)
+    # P-values for the correct classes, i.e. PV[i, Y[i]]:
+    for(th in seq_len(L)) {
+      thIndex <- Y == th
+      Tv <- Nk[thIndex, th]
+      PV[thIndex, th] <- CompPVs(Tv)
     }
     
     
-    # P-values for other classes, i.e. PV[i,th], th != Y[i]:
+    # P-values for other classes, i.e. PV[i, th], th != Y[i]:
 
-    for(i in 1:n) {
-      for(th in 1:L) {
-        if(th !=Y[i]) {
-          
+    for(i in seq_len(n)) {
+      for(th in seq_len(L)[-Y[i]]) {
           # Adjust nvec
           nvec.tmp <- nvec
-          nvec.tmp[c(Y[i],th)] <- c(nvec[Y[i]]-1,nvec[th]+1)
+          nvec.tmp[c(Y[i], th)] <- nvec.tmp[c(Y[i], th)] + c(- 1, 1)
         
           # Adjust sigma
-        
-          if(cova=='standard'){
-            sigma.tmp <- ((n-L)*sigma - (X[i,]-mu[Y[i],])%*%
-                          t(X[i,]-mu[Y[i],]) / 1-1/nvec[Y[i]] +
-                          (X[i,]-mu[th,])%*%t(X[i,]-mu[th,]) /
-                          1-1/nvec[th]) / (n-L)
-          } else {
-            Y.tmp <- Y
-            Y.tmp[i] <- th
-            if(cova=='M'){
-              sigma.tmp <- pvclass:::sigmaM(X=X,Y=Y.tmp,L=L,dimension=dimension,n=n,nvec=nvec.tmp,sigma=sigma)
-            } else {
-              if(cova=='sym'){
-                sigma.tmp <- pvclass:::sigmaSym(X=X,Y=Y.tmp,L=L,dimension=dimension,n=n,nvec=nvec.tmp,sigma)
-              } 
-            }
-          }
+          switch(cova,
+                 'standard' = sigma.tmp <- sigma -
+                   (tcrossprod(X[i, ] - mu[Y[i], ]) / (1 - 1 / nvec[Y[i]])
+                      - tcrossprod(X[i, ] - mu[th, ]) / (1 - 1 / nvec[th])
+                    ) / (n - L),
+                 'M' = {
+                   Y.tmp <- Y
+                   Y.tmp[i] <- th
+                   sigma.tmp <- MVTMLE.LDA(X = X, Y = Y.tmp, L = L, n = n, nu = 1,
+                                                     M0=mu,B0=B,
+                                                     delta=10^(-7),steps=FALSE)$S
+                 },
+                 'sym' = {
+                   Y.tmp <- Y
+                   Y.tmp[i] <- th
+                   sigma.tmp <- sigmaSym(X = X, Y = Y.tmp, L = L,
+                                                   dimension = dimension, n = n,
+                                                   nvec = nvec.tmp, B = B, nu=0,
+                                                   delta=10^(-7), prewhitened=TRUE,
+                                                   steps=FALSE, nmax=500)$S
+                 } )
           
-          JJ <- c(i,which(Y==th))
-          di <- matrix(0,n,n)
-          for(j in JJ) {
-            di[j,] <- mahalanobis(X,X[j,],sigma.tmp)
+          thIndex <- c(i, which(Y == th))
+
+          # Compute Mahalanobis distances
+          sigmatmp.inv <- solve(sigma.tmp)
+          for(m in thIndex) {
+            di[m, ] <- mahalanobis(X, X[m, ], sigmatmp.inv, inverted = TRUE)
           }
+
           # Computation of Rk :  a column vector, where Rk[i] is the
           #                      distance between X[i,] and its k-th nearest
           #                      neighbor.
           #                Nk :  Nk[i,b] is the number of training
           #                      observations from class b among the k
           #                      nearest neighbors of X[i,]
-          Rk <- rep(0,n)
-          Nk <- matrix(0,n,L)
+          Rk <- rep(0, n)
+          Nk <- matrix(0, n, L)
           
-          sdi <- t(apply(di,1,sort))
-          Rk <- sdi[,k]
-          for(j in JJ) {
-            Nk[j,th] <- sum(di[j,JJ] <= Rk[j])
-          }
+          sdi <- apply(di, 1, sort)
+          Rk <- sdi[k, ]
+          Nk[ , th] <- rowSums(di[ , thIndex] <= Rk)
           
-          Tv <- Nk[JJ,th]
-          PV[i,th] <- sum(Tv <= Tv[1]) / nvec.tmp[th]
-        }
+          Tv <- Nk[thIndex, th]
+          PV[i, th] <- sum(Tv <= Tv[1]) / nvec.tmp[th]        
       }
     }
-    dimnames(PV)[[2]] <- attr(Y,'levels')
+    dimnames(PV)[[2]] <- Ylevels
     return(PV)
   } else {
     # Use Euclidean distance
 
-    if(distance=="ddeuclidean") {
+    if(distance == "ddeuclidean") {
       # Use data driven Euclidean distance
-      for(i in 1:dimension) {
-        X[,i] <- X[,i]/sqrt(var(X[,i]))
+      for(i in seq_len(dimension)) {
+        X[ , i] <- X[ , i] / sd(X[ , i])
       }
     }
     di  <- as.matrix(dist(X))
@@ -202,50 +402,43 @@ function(X,Y,k=NA,distance=c('euclidean','ddeuclidean','mahalanobis'),cova=c('st
   #                Nk :  Nk[i,b] is the number of training
   #                      observations from class b among the k
   #                      nearest neighbors of X[i,]
-  Rk <- rep(0,n)
-  Nk <- matrix(0,n,L)
+  Rk <- rep(0, n)
+  Nk <- matrix(0, n, L)
   
-  sdi <- t(apply(di,1,sort))
-  Rk <- sdi[,k]
-  for(i in 1:n) {
-    for(b in 1:L) {
-      bIndex <- which(Y==b)
-      # get number of observations for each class among k
-      # neighbours:
-      Nk[i,b] <- sum(di[i,bIndex] <= Rk[i])
-    }
+  sdi <- apply(di, 1, sort)
+  Rk <- sdi[k, ]
+  for(b in seq_len(L)) {
+    bIndex <- Y == b
+    # get number of observations for each class among k
+    # neighbours:
+    Nk[ , b] <- rowSums(di[ , bIndex] <= Rk)
   }
-  
+         
   # Computation of the cross-validated P-values:
-  PV <- matrix(0,n,L)
+  PV <- matrix(0, n, L)
     
-  # P-values for the correct classes, i.e. PV[i,Y[i]]:
-  for(th in 1:L) {
-    JJ <- which(Y==th)
-    Tv <- Nk[JJ,th]
-    PV[JJ,th] <- pvclass:::CompPVs(Tv)
+  # P-values for the correct classes, i.e. PV[i, Y[i]]:
+  for(th in seq_len(L)) {
+    thIndex <- Y == th
+    Tv <- Nk[thIndex, th]
+    PV[thIndex, th] <- CompPVs(Tv)
   }
     
     
-  # P-values for other classes, i.e. PV[i,th], th ~= Y[i]:
-  for(i in 1:n) {
-    for(th in 1:L) {
-      if(th !=Y[i]) {
-        JJ <- c(i,which(Y==th))
-        Nk_tmp  <- Nk
-        nvec_tmp <- nvec
-        Nk_tmp[JJ,th] <- Nk_tmp[JJ,th] + (di[JJ,i] <= Rk[JJ])
-        Nk_tmp[JJ,Y[i]] <- Nk_tmp[JJ,Y[i]] - (di[JJ,i] <= Rk[JJ])
-        nvec_tmp[Y[i]] <- nvec[Y[i]] - 1
-        nvec_tmp[th] <- nvec[th] + 1
-        
-        Tv <- Nk_tmp[JJ,th]
-        PV[i,th] <- sum(Tv <= Tv[1]) / nvec_tmp[th]
-      }
+  # P-values for other classes, i.e. PV[i, th], th != Y[i]:
+  for(i in seq_len(n)) {
+    for(th in seq_len(L)[-Y[i]]) {
+      thIndex <- c(i, which(Y == th))
+      Nk_tmp  <- Nk
+      #nvec_tmp <- nvec
+      RkInd <- di[thIndex, i] <= Rk[thIndex]
+      Nk_tmp[thIndex, th] <- Nk_tmp[thIndex, th] + RkInd
+      
+      Tv <- Nk_tmp[thIndex, th]
+      PV[i, th] <- sum(Tv <= Tv[1]) / (nvec[th] + 1 )
     }
   }
 
-  dimnames(PV)[[2]] <- attr(Y,'levels')
+  dimnames(PV)[[2]] <- Ylevels
   return(PV)
 }
-

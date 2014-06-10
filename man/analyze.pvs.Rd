@@ -7,18 +7,18 @@ Analyze P-Values
 \description{
 Graphical displays and quantitative analyses of a matrix of p-values.
 }
-\usage{ analyze.pvs(pv, Y = NULL, alpha = 0.05, roc = TRUE, pvplot = TRUE) }
+\usage{ analyze.pvs(pv, Y = NULL, alpha = 0.05, roc = TRUE, pvplot = TRUE, cex = 1) }
 \arguments{
   \item{pv}{ matrix with p-values, e.g. output of \code{\link{cvpvs}} or \code{\link{pvs}}. }
   \item{Y}{ optional. Vector indicating the classes which the observations belong to. }
   \item{alpha}{ test level, i.e. 1 - confidence level. }
   \item{roc}{ logical. If \code{TRUE} and \code{Y} is not \code{NULL}, ROC curves are plotted.   }
   \item{pvplot}{ logical. If \code{TRUE} or \code{Y} is \code{NULL}, the p-values are displayed graphically. }
+  \item{cex}{ A numerical value giving the amount by which plotting text should be magnified relative to the default. }
 }
 \details{
 Displays the p-values graphically, i.e. it plots for each p-value a rectangle. The area of this rectangle is proportional to the the p-value. The rectangle is drawn blue if the p-value is greater than \code{alpha} and red otherwise. \cr
-If \code{Y} is not \code{NULL}, i.e. the class memberships of the observations are known (e.g. cross-validated p-values), then additionally it plots the empirical ROC curves and prints some empirical conditional inclusion probabilities \eqn{I(b,\theta)} and pattern probabilities \eqn{P(b,S)}. Precisely, \eqn{I(b,\theta)} is the proportion of training observations of class \eqn{b} whose p-value for class \eqn{\theta} is greater than \eqn{\alpha}, while \eqn{P(b,S)} is the proportion of training observations of class \eqn{b} such that the \eqn{(1 - \alpha)}-prediction region equals \eqn{S}.
-It also prints the empirical conditional probabilities of correct and unique classification \eqn{U(b)} for each class \eqn{b}, i.e. the ratio of training observations of class \eqn{b} for which the p-value for class \eqn{b} is greater than \eqn{\alpha} and all other p-values are smaller than or equal to \eqn{\alpha}.
+If \code{Y} is not \code{NULL}, i.e. the class memberships of the observations are known (e.g. cross-validated p-values), then additionally it plots the empirical ROC curves and prints some empirical conditional inclusion probabilities \eqn{I(b,\theta)} and/or pattern probabilities \eqn{P(b,S)}. Precisely, \eqn{I(b,\theta)} is the proportion of training observations of class \eqn{b} whose p-value for class \eqn{\theta} is greater than \eqn{\alpha}, while \eqn{P(b,S)} is the proportion of training observations of class \eqn{b} such that the \eqn{(1 - \alpha)}-prediction region equals \eqn{S}.
 }
 \value{
 \item{T}{ Table containing empirical conditional inclusion and/or pattern probabilities for each class \eqn{b}. In case of \eqn{L = 2} or \eqn{L=3} classes, all patterns \eqn{S} are considered. In case of \eqn{L > 3}, all inclusion probabilities and some special patters \eqn{S} are considered. }

@@ -8,14 +8,14 @@ P-Values to Classify New Observations (k Nearest Neighbors)
 Computes nonparametric p-values for the potential class memberships of new observations. The p-values are based on 'k nearest neighbors'.
 }
 \usage{
-pvs.knn(NewX, X, Y, k = NA, distance = c('euclidean', 'ddeuclidean',
+pvs.knn(NewX, X, Y, k = NULL, distance = c('euclidean', 'ddeuclidean',
         'mahalanobis'), cova = c('standard', 'M', 'sym'))
 }
 \arguments{
   \item{NewX}{ data matrix consisting of one or several new observations (row vectors) to be classified. }
   \item{X}{ matrix containing training observations, where each observation is a row vector. }
   \item{Y}{ vector indicating the classes which the training observations belong to. }
-  \item{k}{ number of nearest neighbors. If \code{k} is a vector, the program searches for the best \code{k}. If \code{k = NA}, \code{k} is set to 1:ceiling(length(Y)/2). For more information see section 'Details'.}
+  \item{k}{ number of nearest neighbors. If \code{k} is a vector or \code{k = NULL}, the program searches for the best \code{k}. For more information see section 'Details'. }
   \item{distance}{ the distance measure: \cr
                    'euclidean':    fixed Euclidean distance, \cr
                    'ddeuclidean':  data driven Euclidean distance (component-wise standardization), \cr
@@ -28,11 +28,12 @@ pvs.knn(NewX, X, Y, k = NA, distance = c('euclidean', 'ddeuclidean',
 \details{
 Computes nonparametric p-values for the potential class memberships of new observations. Precisely, for each new observation \code{NewX[i,]} and each class \code{b} the number \code{PV[i,b]} is a p-value for the null hypothesis that \eqn{Y[i] = b}. \cr
 This p-value is based on a permutation test applied to an estimated Bayesian likelihood ratio, using 'k nearest neighbors' with estimated prior probabilities \eqn{N(b)/n}. Here \eqn{N(b)} is the number of observations of class \eqn{b} and \eqn{n} is the total number of observations. \cr
-If \code{k} is a vector, the program searches for the best \code{k}, i.e. for each new observation \code{NewX[i,]} and each class \code{b} the cross-validated p-values of the training data augmented with \code{(NewX[i,],b)} are computed and then the best \code{k} is chosen in the sense that the sum of \code{PV[i,b]} for \code{Y[i] != b} is minimal. If \code{k = NA}, \code{k} is set to 1:ceiling(length(Y)/2).
+If \code{k} is a vector, the program searches for the best \code{k}. To determine the best \code{k} for the p-value \code{PV[i,b]}, the new observation \code{NewX[i,]} is added to the training data with class label \code{b} and then for all training observations with \code{Y[j] != b} the proportion of the \code{k} nearest neighbors of \code{X[j,]} belonging to class \code{b} is computed. Then the \code{k} which minimizes the sum of these values is chosen. \cr
+If \code{k = NULL}, it is set to 2:ceiling(length(Y)/2).
 }
 \value{
 \code{PV} is a matrix containing the p-values. Precisely, for each new observation \code{NewX[i,]} and each class \code{b} the number \code{PV[i,b]} is a p-value for the null hypothesis that \eqn{Y[i] = b}. \cr
-If \code{k} is a vector or \code{NA}, \code{PV} has an attribute \code{"opt.k"}, which is a matrix and \code{opt.k[i,b]} is the best \code{k} for observation \code{NewX[i,]} and class \code{b} in the sense that the sum of \code{PV[i,b]} for \code{Y[i] != b} is minimal. \code{opt.k[i,b]} is used to compute the p-value for observation \code{NewX[i,]} and class \code{b}.
+If \code{k} is a vector or \code{NULL}, \code{PV} has an attribute \code{"opt.k"}, which is a matrix and \code{opt.k[i,b]} is the best \code{k} for observation \code{NewX[i,]} and class \code{b} (see section 'Details'). \code{opt.k[i,b]} is used to compute the p-value for observation \code{NewX[i,]} and class \code{b}.
 }
 \references{
 L. Dümbgen, B.-W. Igl and A. Munk (2008).

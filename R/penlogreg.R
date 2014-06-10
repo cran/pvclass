@@ -12,12 +12,12 @@ penlogreg <- function(X,Y,tau.o=1,
 	# (within groups) etc.:
 	IL <- diag(rep(1,L))
 	YY <- IL[Y,]
-	nvec <- apply(YY,MARGIN=2,FUN=sum)
-	mu.hat <- diag(1/nvec) %*% (t(YY) %*% X)
+	nvec <- colSums(YY)
+	mu.hat <- diag(1/nvec) %*% crossprod(YY, X)
 	Xc <- X - mu.hat[Y,]
 	if (is.null(a0) || is.null(b0))
 	{
-		Sigma.hat <- t(Xc) %*% Xc / (n - L)
+		Sigma.hat <- crossprod(Xc, Xc) / (n - L)
 		std.X <- sqrt(diag(Sigma.hat))
 		# Determine starting values for
 		# logistic regression:
@@ -25,23 +25,23 @@ penlogreg <- function(X,Y,tau.o=1,
 		b0 <- qr.solve(Sigma.hat,t(mu.hat))
 		a0 <- log(nvec/n) - diag(mu.hat %*% b0)
 		a0 <- a0 - mean(a0)
-		b0 <- b0 - apply(b0,MARGIN=1,FUN=mean) %*% t(rep(1,L))
+		b0 <- b0 - tcrossprod(rowMeans(b0), rep(1,L))
 		Theta <- rbind(a0,b0)
 		if (pen.method!="simple")
 		{
 			Theta <- Theta -
-				apply(Theta,1,FUN=mean) %*% t(rep(1,L))
+				tcrossprod(rowMeans(Theta), rep(1,L))
 		}
 		else
 		{
 			Theta <- Theta -
-				apply(Theta,1,FUN=median) %*% t(rep(1,L))
+				tcrossprod(apply(Theta,1,FUN=median), rep(1,L))
 			Theta[1,] <- Theta[1,] - mean(Theta[1,])
 		}
 	}
 	else
 	{
-		std.X <- sqrt(apply(Xc^2,MARGIN=2,FUN=sum)/(n-L))
+		std.X <- sqrt(colSums(Xc^2)/(n-L))
 		Theta <- rbind(a0,b0)
 	}
 	
@@ -50,9 +50,9 @@ penlogreg <- function(X,Y,tau.o=1,
 	dd <- d+1
 	tau <- c(0,tau.o*std.X)
 	tmp <- switch(pen.method,
-		vectors = pvclass:::LR1.full(XX,Y,Theta,tau),
-		simple  = pvclass:::LR2.full(XX,Y,Theta,tau),
-		none    = pvclass:::LR0.full(XX,Y,Theta))
+		vectors = LR1.full(XX,Y,Theta,tau),
+		simple  = LR2.full(XX,Y,Theta,tau),
+		none    = LR0.full(XX,Y,Theta))
 	LR <- tmp$LR
 	# regularize Hessian matrix:
 	nu <- mean(diag(tmp$HLR))*10^(-5)
@@ -74,14 +74,14 @@ penlogreg <- function(X,Y,tau.o=1,
 		Theta.new <- Theta - matrix(delta,nrow=dd,ncol=L)
 		
 		LR.new <- switch(pen.method,
-			vectors = pvclass:::LR1.only(XX,Y,Theta.new,tau),
-			simple  = pvclass:::LR2.only(XX,Y,Theta.new,tau),
-			none    = pvclass:::LR0.only(XX,Y,Theta.new))
+			vectors = LR1.only(XX,Y,Theta.new,tau),
+			simple  = LR2.only(XX,Y,Theta.new,tau),
+			none    = LR0.only(XX,Y,Theta.new))
 		Theta.mid <- (Theta + Theta.new)/2
 		LR.mid <- switch(pen.method,
-			vectors = pvclass:::LR1.only(XX,Y,Theta.mid,tau),
-			simple  = pvclass:::LR2.only(XX,Y,Theta.mid,tau),
-			none    = pvclass:::LR0.only(XX,Y,Theta.mid))
+			vectors = LR1.only(XX,Y,Theta.mid,tau),
+			simple  = LR2.only(XX,Y,Theta.mid,tau),
+			none    = LR0.only(XX,Y,Theta.mid))
 		iter2 <- 0
 		while ((LR.new > LR || LR.mid < LR.new) && iter2 < 20)
 		{
@@ -90,17 +90,17 @@ penlogreg <- function(X,Y,tau.o=1,
 			LR.new <- LR.mid
 			Theta.mid <- (Theta + Theta.new)/2
 			LR.mid <- switch(pen.method,
-				vectors = pvclass:::LR1.only(XX,Y,Theta.mid,tau),
-				simple  = pvclass:::LR2.only(XX,Y,Theta.mid,tau),
-				none    = pvclass:::LR0.only(XX,Y,Theta.mid))
+				vectors = LR1.only(XX,Y,Theta.mid,tau),
+				simple  = LR2.only(XX,Y,Theta.mid,tau),
+				none    = LR0.only(XX,Y,Theta.mid))
 		}
 		if (LR.new < LR)
 		{
 			Theta <- Theta.new
 			tmp <- switch(pen.method,
-				vectors = pvclass:::LR1.full(XX,Y,Theta,tau),
-				simple  = pvclass:::LR2.full(XX,Y,Theta,tau),
-				none    = pvclass:::LR0.full(XX,Y,Theta))
+				vectors = LR1.full(XX,Y,Theta,tau),
+				simple  = LR2.full(XX,Y,Theta,tau),
+				none    = LR0.full(XX,Y,Theta))
 			LR <- tmp$LR
 			# regularize Hessian matrix:
 			nu <- mean(diag(tmp$HLR))*10^(-5)

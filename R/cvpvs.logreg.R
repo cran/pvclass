@@ -1,4 +1,4 @@
-cvpvs.logreg <- function(X,Y,tau.o=1,
+cvpvs.logreg <- function(X,Y,tau.o=10, find.tau=FALSE, delta=2, tau.max=80, tau.min=1,
 	pen.method=c("vectors","simple","none"),progress=TRUE)
 {
 	pen.method <- match.arg(pen.method)
@@ -19,12 +19,13 @@ cvpvs.logreg <- function(X,Y,tau.o=1,
 		print('Preliminary log. regression:',
 			quote=FALSE)
 	}
-	tmp <- pvclass:::penlogreg(X,Y,tau.o,
+	tmp <- penlogreg(X,Y,tau.o,
 		pen.method=pen.method,progress=progress)
 	a0 <- tmp$a
 	b0 <- tmp$b
 	
 	PV <- matrix(1,nrow=n,ncol=L)
+        tau.opt <- PV
 	for (i in 1:n)
 	{
 		if (progress)
@@ -35,8 +36,19 @@ cvpvs.logreg <- function(X,Y,tau.o=1,
 		NewX <- X[i,]
 		Xr <- X[(1:n)!=i,]
 		Yr <- Y[(1:n)!=i]
-		PV[i,] <- pvclass:::pvs.logreg(NewX,Xr,Yr,tau.o=tau.o,
-			pen.method=pen.method,a0=a0,b0=b0)
-	}
+                tmp <- pvs.logreg(NewX,Xr,Yr,tau.o=tau.o,
+                                            find.tau=find.tau, delta=delta,
+                                            tau.max=tau.max, tau.min=tau.min,
+                                            pen.method=pen.method,a0=a0,b0=b0)
+                PV[i,] <- tmp
+                if(find.tau==TRUE)
+                  {
+                    tau.opt[i,] <- attributes(tmp)$tau.opt
+                  }
+              }
+        if(find.tau==TRUE)
+          {
+            attributes(PV)$tau.opt <- tau.opt
+          }
 	return(PV)
 }

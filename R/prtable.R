@@ -82,7 +82,7 @@ function(Y, pv, alpha = 0.05)
 			{
 				T[b,theta] <- sum(pr[ib,theta])
 			}
-			T[b,L+1] <- sum(pr[ib,theta] &
+			T[b,L+1] <- sum(pr[ib,b] &
 				(apply(pr[ib,],1,sum) == 1))
 			T[b,L+2] <- sum((apply(pr[ib,],1,sum) == 0))
 			T[b,L+3] <- sum((apply(pr[ib,],1,sum) == L))
