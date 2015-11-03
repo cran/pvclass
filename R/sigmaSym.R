@@ -33,9 +33,10 @@ sigmaSym <- function(X,Y,L,dimension,n,nvec,B=NULL,nu=0,delta=10^(-7),
               }
             X0 <- NULL
             for(b in seq_len(L)){
-              Xtmp <- unique(X[Y==b,])
+              Xtmp <- unique(X[Y==b, , drop = FALSE])
               Pi <- sample(NROW(Xtmp))
-              X0 <- rbind(X0, Xtmp[Pi,] - Xtmp[Pi[c(2:NROW(Xtmp),1)],])
+              X0 <- rbind(X0, Xtmp[Pi, , drop = FALSE]
+                              - Xtmp[Pi[c(2:NROW(Xtmp),1)], , drop = FALSE])
             }
             
             C <- MVTMLE0(X0,nu,delta,
@@ -54,7 +55,7 @@ sigmaSym <- function(X,Y,L,dimension,n,nvec,B=NULL,nu=0,delta=10^(-7),
 	# N observation pairs:
 	{
           Xtmp <- lapply(X = seq_len(L),
-                         FUN = function(b, mat, Y) unique(mat[which(Y == b), ]),
+                         FUN = function(b, mat, Y) unique(mat[which(Y == b), , drop = FALSE]),
                          mat = Xs,
                          Y = Y)
           
@@ -64,7 +65,7 @@ sigmaSym <- function(X,Y,L,dimension,n,nvec,B=NULL,nu=0,delta=10^(-7),
           XXs <- NULL
           for(b in seq_len(L)) {
             IJ <- combn(nvec[b], 2)
-            XXs <- rbind(XXs, Xtmp[[b]][IJ[1,],] - Xtmp[[b]][IJ[2,],])
+            XXs <- rbind(XXs, Xtmp[[b]][IJ[1,], , drop = FALSE] - Xtmp[[b]][IJ[2,], , drop = FALSE])
           }
           tmp <- MVTMLE0w(XXs,w=w,nu,steps=steps,
                          prewhitened=TRUE)
@@ -78,7 +79,7 @@ sigmaSym <- function(X,Y,L,dimension,n,nvec,B=NULL,nu=0,delta=10^(-7),
                 w <- 2 / nvec / (n - L)
                 Psi <- 0
                 for(b in seq_len(L)) {
-                  Psi <- Psi + LocalPsi(Xs[Y==b,],nu,n = nvec[b],dimension,N= 1/w[b])
+                  Psi <- Psi + LocalPsi(Xs[Y==b, , drop = FALSE],nu,n = nvec[b],dimension,N= 1/w[b])
                 }
 		Tmp <- eigen(Psi,symmetric=TRUE)
 		nG <- sqrt(sum((1 - Tmp$values)^2))
@@ -152,13 +153,13 @@ sigmaSym <- function(X,Y,L,dimension,n,nvec,B=NULL,nu=0,delta=10^(-7),
 
 LocalPsi <- function(X,nu,n,p,N)
 {
-	Y <- X[n,] - X[n-1,]
+	Y <- X[n, , drop = FALSE] - X[n-1, , drop = FALSE]
 	Z <- Y/sqrt(nu + sum(Y^2))
 	Psi <- tcrossprod(Z)
 	for (i in 1:(n-2))
 	{
 		jj <- (i+1):n
-		Y <- t(t(X[jj,]) - X[i,])
+		Y <- t(t(X[jj, , drop = FALSE]) - X[i,])
 		denom <- nu + rowSums(Y^2)
 		Z <- Y/sqrt(denom)
 		Psi <- Psi + crossprod(Z)
@@ -170,13 +171,13 @@ LocalPsi <- function(X,nu,n,p,N)
 
 LocalHt <- function(X,nu,n,p,N,evs)
 {
-	Y <- X[n,] - X[n-1,]
+	Y <- X[n, , drop = FALSE] - X[n-1, , drop = FALSE]
 	Z <- Y^2/(nu + sum(Y^2))
 	Ht <- tcrossprod(Z)
 	for (i in 1:(n-2))
 	{
 		jj <- (i+1):n
-		Y <- t(t(X[jj,]) - X[i,])
+		Y <- t(t(X[jj, , drop = FALSE]) - X[i,])
 		denom <- nu + rowSums(Y^2)
 		Z <- Y^2/denom
 		Ht <- Ht + crossprod(Z)
@@ -188,7 +189,7 @@ LocalHt <- function(X,nu,n,p,N,evs)
 
 LocalDL <- function(X,nu,n,p,N,Xnew,a)
 {
-	Y    <- X[n,]    - X[n-1,]
+	Y    <- X[n, , drop = FALSE]    - X[n-1, , drop = FALSE]
 	Ynew <- Xnew[n,] - Xnew[n-1,]
 	DL <- log((nu + sum(Ynew^2))/
 	          (nu + sum(Y^2)))
@@ -339,7 +340,7 @@ MVTMLE0 <- function(X,nu=0,delta=10^(-7),
 		B <- B %*% Tmp$vectors
 		Xs <- Xs %*% Tmp$vectors
 		Zs <- Xs^2/denom
-		Ht <- diag(Tmp$values) -
+		Ht <- diag(as.matrix(Tmp$values)) -
 			(nu + p) * crossprod(Zs)/n + (nu == 0)/p
 		a <- qr.solve(Ht,Tmp$values - 1)
 

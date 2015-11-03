@@ -11,24 +11,27 @@ function(NewX, X, Y, wtype = c('linear', 'exponential'), W = NULL, tau = 0.3,
   Y <- as.integer(factor(Y))
   L <- max(Y)
 
-  
-  if(is.vector(NewX)) {
-    NewX <- t(NewX)
-  } else {
-    NewX <- as.matrix(NewX)
-  }
-  
-  if(NCOL(NewX) == 1) {
-    nr <- 1
-    s <- length(NewX)
-  } else {
-    nr <- NROW(NewX)
-    s <- NCOL(NewX)
+  # Stop if lengths of X[,1] and Y do not match
+  if(length(Y) != length(X[,1])) {
+    stop('length(Y) != length(X[,1])')
   }
 
-  # Stop if dimensions of NewX[i, ] and X[j, ] do not match
+  NewX <- as.matrix(NewX)
+  
+  if(dimension > 1 & NCOL(NewX) == 1) {
+    NewX <- t(NewX)
+  }
+  
+  if(dimension == 1 & NCOL(NewX) > 1) {
+    NewX <- t(NewX)
+  }
+  
+  nr <- NROW(NewX)
+  s <- NCOL(NewX)
+
+  # Stop if dimensions of NewX[i,] and X[j,] do not match
   if(s != dimension) {
-    stop('dimensions of NewX[i, ] and X[j, ] do not match!')
+    stop('dimensions of NewX[i,] and X[j,] do not match!')
   }
   
   cova <- match.arg(cova)
@@ -139,7 +142,7 @@ function(NewX, X, Y, wtype = c('linear', 'exponential'), W = NULL, tau = 0.3,
                       # Compute mu
                       mu <- matrix(0, L, dimension)
                       for(m in seq_len(L)) {
-                        mu[m, ] = colMeans(X[Y == m, ])
+                        mu[m, ] = colMeans(X[Y == m, , drop = FALSE])
                       }
                       sigma <- sigmaSt(X = X, Y = Y, L = L,
                                                  dimension = dimension,
@@ -286,7 +289,7 @@ function(NewX, X, Y, wtype = c('linear', 'exponential'), W = NULL, tau = 0.3,
                     # Compute mu
                     mu <- matrix(0, L, dimension)
                     for(m in seq_len(L)) {
-                      mu[m, ] = colMeans(X[Y == m, ])
+                      mu[m, ] = colMeans(X[Y == m, , drop = FALSE])
                     }
                     sigma <- sigmaSt(X = X, Y = Y, L = L,
                                                                     dimension = dimension, n = n,

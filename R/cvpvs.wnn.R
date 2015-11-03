@@ -11,6 +11,12 @@ function(X, Y, wtype = c('linear', 'exponential'), W = NULL, tau = 0.3,
   Ylevels <- levels(factor(Y))
   Y <- as.integer(factor(Y))
   L <- max(Y)
+
+  # Stop if lengths of X[,1] and Y do not match
+  if(length(Y) != length(X[,1])) {
+    stop('length(Y) != length(X[,1])')
+  }
+
   
   wtype <- match.arg(wtype)
   cova <- match.arg(cova)
@@ -105,7 +111,7 @@ function(X, Y, wtype = c('linear', 'exponential'), W = NULL, tau = 0.3,
              # Compute mu
              mu <- matrix(0, L, dimension)
              for(m in seq_len(L)) {
-               mu[m, ] = colMeans(X[Y == m, ])
+               mu[m, ] = colMeans(X[Y == m, , drop = FALSE])
              }
              
              # Compute sigma      
@@ -275,7 +281,7 @@ function(X, Y, wtype = c('linear', 'exponential'), W = NULL, tau = 0.3,
     # Compute mu
     mu <- matrix(0, L, dimension)
     for(m in seq_len(L)) {
-      mu[m, ] = colMeans(X[Y == m, ])
+      mu[m, ] = colMeans(X[Y == m, , drop = FALSE])
     }
     
     # Compute sigma      

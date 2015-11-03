@@ -12,3 +12,6 @@ export(
        analyze.pvs
 )
 import(Matrix)
+importFrom("graphics", "lines", "par", "plot", "points", "rect", "text")
+importFrom("stats", "cov", "dist", "mahalanobis", "median", "sd")
+importFrom("utils", "combn")

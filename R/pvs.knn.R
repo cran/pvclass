@@ -10,25 +10,29 @@ function(NewX, X, Y, k = NULL,
   Ylevels <- levels(factor(Y))
   Y <- as.integer(factor(Y))
   L <- max(Y)
-    
-  if(is.vector(NewX)) {
+  
+  # Stop if lengths of X[,1] and Y do not match
+  if(length(Y) != length(X[,1])) {
+    stop('length(Y) != length(X[,1])')
+  }
+
+  NewX <- as.matrix(NewX)
+  
+  if(dimension > 1 & NCOL(NewX) == 1) {
     NewX <- t(NewX)
-  } else {
-    NewX <- as.matrix(NewX)
   }
   
-  if(NCOL(NewX) == 1) {
-    nr <- 1
-    s <- length(NewX)
-  } else {
-    nr <- NROW(NewX)
-    s <- NCOL(NewX)
+  if(dimension == 1 & NCOL(NewX) > 1) {
+    NewX <- t(NewX)
   }
   
-  # Stop if dimensions of NewX[i, ] and X[j, ] do not match
+  nr <- NROW(NewX)
+  s <- NCOL(NewX)
+
+  # Stop if dimensions of NewX[i,] and X[j,] do not match
   if(s != dimension) {
-    stop('dimensions of NewX[i, ] and X[j, ] do not match!')
-  }  
+    stop('dimensions of NewX[i,] and X[j,] do not match!')
+  } 
   
   cova <- match.arg(cova)
   distance <- match.arg(distance)
@@ -122,7 +126,7 @@ function(NewX, X, Y, k = NULL,
                       # Compute mu
                       mu <- matrix(0, L, dimension)
                       for(b in seq_len(L)) {
-                        mu[b, ] = colMeans(X[Y == b, ])
+                        mu[b, ] = colMeans(X[Y == b, , drop = FALSE])
                       }
                       sigma <- sigmaSt(X = X, Y = Y, L = L,
                                                  dimension = dimension, n = n,
@@ -213,6 +217,7 @@ function(NewX, X, Y, k = NULL,
     
     dimnames(opt.k)[[2]] <- dimnames(PV)[[2]] <- Ylevels
     attributes(PV)$opt.k <- opt.k
+    dimnames(PV)[[2]] <- Ylevels
     return(PV)
   }
   
@@ -234,7 +239,7 @@ function(NewX, X, Y, k = NULL,
                     # Compute mu
                     mu <- matrix(0, L, dimension)
                     for(m in seq_len(L)) {
-                      mu[m, ] = colMeans(X[Y == m, ])
+                      mu[m, ] = colMeans(X[Y == m, , drop = FALSE ])
                     }
                     sigma <- sigmaSt(X = X, Y = Y, L = L,
                                                dimension = dimension, n = n,
@@ -312,7 +317,7 @@ function(NewX, X, Y, k = NULL,
            dimnames(PV)[[2]] <- Ylevels
            return(PV)
          },
-         'ddeuclidean' = {
+         'ddeuclidean' = {  
            # Use data driven Euclidean distance
            Nk <- rep(0, n + 1)
            for(i in seq_len(nr)) {		
@@ -337,7 +342,7 @@ function(NewX, X, Y, k = NULL,
                PV[i, th] <- sum(Nk <= tail(Nk, 1)) / (nvec[th] + 1)
              }
            }
-           dimnames(PV)[[2]] <- attr(Y, 'levels')
+           dimnames(PV)[[2]] <- Ylevels
            return(PV)
          },
          'euclidean' = {

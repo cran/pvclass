@@ -2,12 +2,17 @@ cvpvs.logreg <- function(X,Y,tau.o=10, find.tau=FALSE, delta=2, tau.max=80, tau.
 	pen.method=c("vectors","simple","none"),progress=TRUE)
 {
 	pen.method <- match.arg(pen.method)
-	n <- dim(X)[1]
+	X <- as.matrix(X)
+        n <- dim(X)[1]
 	d <- dim(X)[2]
 	Y <- factor(Y)
 	Y <- unclass(Y)
 	L <- max(Y)
-	X <- as.matrix(X)
+        Ylevels <- levels(Y)
+        # Stop if lengths of X[,1] and Y do not match
+        if(length(Y) != length(X[,1])) {
+          stop('length(Y) != length(X[,1])')
+        }
 	
 	if (progress)
 	{
@@ -50,5 +55,6 @@ cvpvs.logreg <- function(X,Y,tau.o=10, find.tau=FALSE, delta=2, tau.max=80, tau.
           {
             attributes(PV)$tau.opt <- tau.opt
           }
+        dimnames(PV)[[2]] <- Ylevels
 	return(PV)
 }

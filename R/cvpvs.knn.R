@@ -14,6 +14,11 @@ function(X, Y, k = NULL,
   Ylevels <- levels(factor(Y))
   Y <- as.integer(factor(Y))
   L <- max(Y)
+  
+  # Stop if lengths of X[,1] and Y do not match
+  if(length(Y) != length(X[,1])) {
+    stop('length(Y) != length(X[,1])')
+  }
 
   if(any(k >= n)) stop('k >= sample size!')
   
@@ -100,7 +105,7 @@ function(X, Y, k = NULL,
                       # Compute mu
                       mu <- matrix(0, L, dimension)
                       for(m in seq_len(L)) {
-                        mu[m, ] = colMeans(X[Y == m, ])
+                        mu[m, ] = colMeans(X[Y == m, , drop = FALSE])
                       }
                       sigma <- sigmaSt(X = X, Y = Y, L = L,
                                                  dimension = dimension,
@@ -260,7 +265,7 @@ function(X, Y, k = NULL,
              # Compute mu
              mu <- matrix(0, L, dimension)
              for(m in seq_len(L)) {
-               mu[m, ] = colMeans(X[Y == m, ])
+               mu[m, ] = colMeans(X[Y == m, , drop = FALSE])
              }
              sigma <- sigmaSt(X = X, Y = Y, L = L,
                                         dimension = dimension, n = n, mu = mu)

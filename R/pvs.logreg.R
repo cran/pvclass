@@ -4,12 +4,18 @@ pvs.logreg <- function(NewX, X, Y, tau.o=10, find.tau=FALSE, delta=2, tau.max=80
 	progress=FALSE)
 {
 	pen.method <- match.arg(pen.method)
+        X <- as.matrix(X)
 	n <- dim(X)[1]
 	d <- dim(X)[2]
 	Y <- factor(Y)
 	Y <- unclass(Y)
-	L <- max(Y)
-	X <- as.matrix(X)
+	L <- max(Y)	
+        Ylevels <- levels(Y)
+
+        # Stop if lengths of X[,1] and Y do not match
+        if(length(Y) != length(X[,1])) {
+          stop('length(Y) != length(X[,1])')
+        }
 	
 	if (is.null(a0) || is.null(b0))
 	{
@@ -23,11 +29,24 @@ pvs.logreg <- function(NewX, X, Y, tau.o=10, find.tau=FALSE, delta=2, tau.max=80
 		b0 <- tmp$b
 	}
 
-	NewX <- as.matrix(NewX)
-	if (dim(NewX)[2] == 1)
-	{
-		NewX <- t(NewX)
-	}
+        NewX <- as.matrix(NewX)
+  
+        if(d > 1 & NCOL(NewX) == 1) {
+          NewX <- t(NewX)
+        }
+  
+        if(d == 1 & NCOL(NewX) > 1) {
+          NewX <- t(NewX)
+        }
+  
+        nr <- NROW(NewX)
+        s <- NCOL(NewX)
+
+        # Stop if dimensions of NewX[i,] and X[j,] do not match
+        if(s != d) {
+          stop('dimensions of NewX[i,] and X[j,] do not match!')
+        } 
+        
 	PV <- matrix(1,nrow=dim(NewX)[1],ncol=L)
 	Xa <- rbind(rep(0,d),X)
 	Ya <- c(0,Y)
@@ -75,5 +94,6 @@ pvs.logreg <- function(NewX, X, Y, tau.o=10, find.tau=FALSE, delta=2, tau.max=80
 		}
             }
         }
+        dimnames(PV)[[2]] <- Ylevels
 	return(PV)
 }

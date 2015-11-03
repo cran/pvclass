@@ -10,7 +10,12 @@ function(X, Y, cova = c('standard', 'M', 'sym')) {
   Ylevels <- levels(factor(Y))
   Y <- as.integer(factor(Y))
   L <- max(Y)
- 
+
+  # Stop if lengths of X[,1] and Y do not match
+  if(length(Y) != length(X[,1])) {
+    stop('length(Y) != length(X[,1])')
+  }
+  
   # Computation of nvec: an L-dimensional column vector, where nvec[b]
   # is the number of training observations belonging to class b.
   nvec <- rep(0, L)
@@ -35,7 +40,7 @@ function(X, Y, cova = c('standard', 'M', 'sym')) {
            # Compute mu
            mu <- matrix(0, L, dimension)
            for(b in seq_len(L)) {
-             mu[b, ] = colMeans(X[Y == b, ])
+             mu[b, ] = colMeans(X[Y == b, , drop = FALSE])
            }
            
            sigma <- sigmaSt(X = X, Y = Y, L = L,
@@ -53,7 +58,7 @@ function(X, Y, cova = c('standard', 'M', 'sym')) {
            # Compute mu
            mu <- matrix(0, L, dimension)
            for(b in seq_len(L)) {
-             mu[b, ] = colMeans(X[Y == b, ])
+             mu[b, ] = colMeans(X[Y == b, , drop = FALSE])
            }
            
            tmp <- sigmaSym(X = X, Y = Y, L = L,
