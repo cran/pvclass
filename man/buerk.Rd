@@ -44,8 +44,18 @@ This data set collected by Dr. Bürk at the university hospital in Lübeck conta
   }
 }
 \source{
-L. Dümbgen, B.-W. Igl and A. Munk (2008).
+Dümbgen L., Igl B.-W. and Munk A. (2008)
 P-Values for Classification.
-\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \url{http://arxiv.org/abs/0801.2934}.
+\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \url{http://dx.doi.org/10.1214/08-EJS245}.
+}
+\references{
+Zumbrunnen N. and Dümbgen L. (2017)
+pvclass: An R Package for p Values for Classification.
+\emph{Journal of Statistical Software \bold{78(4)}}, 1--19.
+doi:10.18637/jss.v078.i04
+
+Zumbrunnen N. (2014)
+P-Values for Classification – Computational Aspects and Asymptotics.
+Ph.D. thesis, University of Bern, available at \url{http://boris.unibe.ch/id/eprint/53585}.
 }
 \keyword{datasets}

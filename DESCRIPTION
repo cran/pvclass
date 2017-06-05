@@ -1,8 +1,8 @@
 Package: pvclass
 Type: Package
 Title: P-Values for Classification
-Version: 1.3
-Date: 2015-11-03
+Version: 1.4
+Date: 2017-06-05
 Author: Niki Zumbrunnen <niki.zumbrunnen@gmail.com>, 
 	Lutz Duembgen <lutz.duembgen@stat.unibe.ch>.
 Maintainer: Niki Zumbrunnen <niki.zumbrunnen@gmail.com>
@@ -19,6 +19,6 @@ Description: Computes nonparametric p-values for the potential class
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: no
-Packaged: 2015-11-03 07:24:05 UTC; niki
+Packaged: 2017-06-05 08:06:55 UTC; niki
 Repository: CRAN
-Date/Publication: 2015-11-03 10:59:08
+Date/Publication: 2017-06-05 15:13:51 UTC

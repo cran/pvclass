@@ -28,18 +28,23 @@ This p-value is based on a permutation test applied to an estimated Bayesian lik
 \code{PV} is a matrix containing the p-values. Precisely, for each new observation \code{NewX[i,]} and each class \code{b} the number \code{PV[i,b]} is a p-value for the null hypothesis that \eqn{Y[i] = b}.
 }
 \references{
-L. Dümbgen, B.-W. Igl and A. Munk (2008).
-P-Values for Classification.
-\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \url{http://arxiv.org/abs/0801.2934}.
+Zumbrunnen N. and Dümbgen L. (2017)
+pvclass: An R Package for p Values for Classification.
+\emph{Journal of Statistical Software \bold{78(4)}}, 1--19.
+doi:10.18637/jss.v078.i04
 
-N. Zumbrunnen (2009).
-P-Values for Weighted Nearest-Neighbor Classifiers.
-Master Thesis, IMSV, Univ. of Bern, available at \url{http://www.imsv.unibe.ch/unibe/philnat/imsv/content/e6079/e6261/e9754/zumbrunnen2009_eng.pdf}.
+Dümbgen L., Igl B.-W. and Munk A. (2008)
+P-Values for Classification.
+\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \url{http://dx.doi.org/10.1214/08-EJS245}.
+
+Zumbrunnen N. (2014)
+P-Values for Classification – Computational Aspects and Asymptotics.
+Ph.D. thesis, University of Bern, available at \url{http://boris.unibe.ch/id/eprint/53585}.
 }
 \author{
-Niki Zumbrunnen \email{niki.zumbrunnen@stat.unibe.ch} \cr
+Niki Zumbrunnen \email{niki.zumbrunnen@gmail.com} \cr
 Lutz Dümbgen \email{lutz.duembgen@stat.unibe.ch} \cr
-\url{http://www.imsv.unibe.ch/content/staff/personalhomepages/duembgen/index_eng.html}
+\url{www.imsv.unibe.ch/duembgen/index_ger.html}
 }
 \seealso{ 
 \code{\link{pvs}, \link{pvs.knn}, \link{pvs.wnn}, \link{pvs.logreg}}
