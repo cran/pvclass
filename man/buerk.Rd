@@ -46,7 +46,7 @@ This data set collected by Dr. Bürk at the university hospital in Lübeck conta
 \source{
 Dümbgen L., Igl B.-W. and Munk A. (2008)
 P-Values for Classification.
-\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \url{http://dx.doi.org/10.1214/08-EJS245}.
+\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \doi{10.1214/08-EJS245}.
 }
 \references{
 Zumbrunnen N. and Dümbgen L. (2017)

@@ -47,7 +47,7 @@ doi:10.18637/jss.v078.i04
 
 Dümbgen L., Igl B.-W. and Munk A. (2008)
 P-Values for Classification.
-\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \url{http://dx.doi.org/10.1214/08-EJS245}.
+\emph{Electronic Journal of Statistics \bold{2}}, 468--493, available at \doi{10.1214/08-EJS245}.
 
 Zumbrunnen N. (2014)
 P-Values for Classification – Computational Aspects and Asymptotics.
@@ -56,7 +56,7 @@ Ph.D. thesis, University of Bern, available at \url{http://boris.unibe.ch/id/epr
 \author{
 Niki Zumbrunnen \email{niki.zumbrunnen@gmail.com} \cr
 Lutz Dümbgen \email{lutz.duembgen@stat.unibe.ch} \cr
-\url{www.imsv.unibe.ch/duembgen/index_ger.html}
+\url{https://www.imsv.unibe.ch/about_us/staff/prof_dr_duembgen_lutz/index_eng.html}
 }
 \seealso{ 
 \code{ \link{pvs}, \link{pvs.gaussian}, \link{pvs.knn}, \link{pvs.wnn}}

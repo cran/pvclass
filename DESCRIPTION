@@ -1,11 +1,16 @@
 Package: pvclass
 Type: Package
 Title: P-Values for Classification
-Version: 1.4
-Date: 2017-06-05
-Author: Niki Zumbrunnen <niki.zumbrunnen@gmail.com>, 
-	Lutz Duembgen <lutz.duembgen@stat.unibe.ch>.
-Maintainer: Niki Zumbrunnen <niki.zumbrunnen@gmail.com>
+Version: 1.4.1
+Date: 2025-04-30
+Authors@R: c(person(given = "Niki",
+                      family = "Zumbrunnen",
+                      role = c("aut", "cre"),
+                      email = "niki.zumbrunnen@gmail.com"),
+               person(given = "Lutz",
+                      family = "Duembgen.",
+                      role = "aut",
+                      email = "lutz.duembgen@stat.unibe.ch"))
 Imports: Matrix
 Description: Computes nonparametric p-values for the potential class
         memberships of new observations as well as cross-validated
@@ -19,6 +24,9 @@ Description: Computes nonparametric p-values for the potential class
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: no
-Packaged: 2017-06-05 08:06:55 UTC; niki
+Packaged: 2025-04-30 06:57:23 UTC; znn1
+Author: Niki Zumbrunnen [aut, cre],
+  Lutz Duembgen. [aut]
+Maintainer: Niki Zumbrunnen <niki.zumbrunnen@gmail.com>
 Repository: CRAN
-Date/Publication: 2017-06-05 15:13:51 UTC
+Date/Publication: 2025-04-30 07:30:01 UTC
